@@ -18,7 +18,7 @@ npm install
 npm run dev
 ```
 
-5. 웹브라우저에서 **http://localhost:8000** 접속
+5. 웹브라우저에서 **http://localhost:5173** 접속
 6. 업종 선택 → 지도 클릭 또는 '빠른 위치 선택' → **AI 입지 분석하기** 클릭 → **후보지 저장** → **리포트 생성하기**
 
 종료는 터미널에서 `Ctrl + C`. React/Vite이므로 HTML 파일만 더블클릭하면 실행되지 않습니다.
@@ -133,7 +133,7 @@ VITE_MAP_PROVIDER=kakao
 VITE_KAKAO_MAP_JS_KEY=카카오_웹_JavaScript_키
 ```
 
-- 카카오 개발자 콘솔에서 **JavaScript 키와 웹 도메인**(`http://localhost:8000` 등)을 등록해야 합니다.
+- 카카오 개발자 콘솔에서 **JavaScript 키와 웹 도메인**(`http://localhost:5173` 및 배포한 Vercel 도메인 등)을 등록해야 합니다.
 - 카카오 JavaScript 키는 브라우저에서 SDK를 불러오기 위해 사용되는 클라이언트 키로, `VITE_` 환경변수이므로 브라우저에 노출됩니다. 도메인 제한을 적용하세요.
 - **GPT API 키, 카카오 REST API 비밀키**는 여기에 넣지 않고 반드시 백엔드에서 관리하세요.
 - 환경변수를 바꾸면 `npm run dev`를 재시작하세요.
@@ -152,5 +152,17 @@ VITE_KAKAO_MAP_JS_KEY=카카오_웹_JavaScript_키
 - 백엔드 담당자: **`docs/API_CONTRACT.md`** 와 **`docs/fixtures/`**
 - 전체 팀: **`docs/GITHUB_WORKFLOW.md`**
 - 프론트 담당자: **`docs/QA_CHECKLIST.md`**, **`docs/BEGINNER_GUIDE.md`**
+
+## 10. 팀 공유용 웹사이트 배포 (Vercel)
+
+저장소를 Vercel에 연결하면 `main` 브랜치가 갱신될 때마다 빌드·배포되고 공유 URL이 생성됩니다.
+
+1. Vercel에서 **Add New → Project**를 선택하고 GitHub 저장소 `ysr4tb92th-maker/juha`를 가져옵니다.
+2. Framework Preset은 **Vite**, Build Command는 `npm run build`, Output Directory는 `dist`로 설정합니다.
+3. 현재는 시연 데이터를 사용하므로 별도 환경변수 없이 배포할 수 있습니다. 카카오맵을 쓸 경우 환경변수 `VITE_MAP_PROVIDER=kakao`, `VITE_KAKAO_MAP_JS_KEY`를 Vercel Project Settings → Environment Variables에 추가합니다.
+4. 배포가 끝나면 Vercel의 도메인(예: `https://<프로젝트명>.vercel.app`)을 팀원과 공유하고, 카카오 개발자 콘솔의 JavaScript 키 허용 도메인에도 추가합니다.
+5. 실제 백엔드를 연결할 때만 `VITE_USE_MOCK=false`, `VITE_API_BASE_URL=https://<공개-백엔드-주소>`를 설정하고, 백엔드 CORS에 배포 도메인을 허용합니다. `localhost` 주소는 배포 환경에서 사용할 수 없습니다.
+
+프런트엔드 개발 서버는 `http://localhost:5173`, 백엔드 개발 API는 `http://localhost:8000`을 사용합니다. 두 서버의 포트는 서로 다릅니다.
 
 현재 API 규격은 **초안**입니다. 실제 데이터의 업종, 예측 단위, 지원 반경, 제공 가능한 통계가 확정되면 조원과 API 문서를 함께 수정하세요.
