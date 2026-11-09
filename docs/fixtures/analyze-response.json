@@ -1,0 +1,13 @@
+{
+  "status": "success",
+  "analysis_id": "analysis-123",
+  "predicted_monthly_sales_krw": 28500000,
+  "sales_unit": "KRW/month",
+  "analysis_level": "상권별 예상 매출 예시",
+  "competitor_count": 18,
+  "estimated_daily_foot_traffic": null,
+  "accessibility_score": null,
+  "radius_m": 500,
+  "model_name": "XGBoost",
+  "mock": false
+}
