@@ -1,4 +1,4 @@
-# LOCALLY — AI 창업 입지 시뮬레이터
+# juha — LOCALLY AI 창업 입지 시뮬레이터
 
 **프론트엔드 v1.0 · 백엔드 API 통합 직전 단계**
 
