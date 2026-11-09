@@ -6,10 +6,10 @@ const jsonResponse=(body,status=200)=>({ok:status>=200&&status<300,status,json:a
 
 test('POST JSON 요청에 필드가 정확히 담김',async()=>{
   let called;
-  const result=await postJson('http://localhost:8000','/api/analyze',{industry:'cafe'}, {
+  const result=await postJson('http://localhost:8001','/api/analyze',{industry:'cafe'}, {
     fetchImpl:async(url,options)=>{called={url,options};return jsonResponse({status:'success'});},
   });
-  assert.equal(called.url,'http://localhost:8000/api/analyze');
+  assert.equal(called.url,'http://localhost:8001/api/analyze');
   assert.equal(called.options.method,'POST');
   assert.deepEqual(JSON.parse(called.options.body),{industry:'cafe'});
   assert.deepEqual(result,{status:'success'});

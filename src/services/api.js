@@ -9,7 +9,7 @@ import { postJson } from './http.js';
 
 export { INDUSTRIES };
 export const IS_MOCK = import.meta.env?.VITE_USE_MOCK !== 'false';
-const BASE_URL = (import.meta.env?.VITE_API_BASE_URL || 'http://localhost:8000').replace(/\/$/, '');
+const BASE_URL = (import.meta.env?.VITE_API_BASE_URL || 'http://localhost:8001').replace(/\/$/, '');
 
 const delay = (ms, signal) => new Promise((resolve, reject) => {
   if (signal?.aborted) { reject(new DOMException('요청 취소', 'AbortError')); return; }

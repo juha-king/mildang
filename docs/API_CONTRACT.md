@@ -5,13 +5,13 @@
 
 ## 기본 규칙
 
-- Base URL: `http://localhost:8000` (개발용), `/api/...` (경로)
+- Base URL: `http://localhost:8001` (개발용), `/api/...` (경로)
 - 형식: `application/json; charset=utf-8`, UTF-8
 - 위치 좌표: 위도(`latitude`), 경도(`longitude`), WGS84/EPSG:4326
 - 반경: `radius_m`, 정수 미터 (`300`, `500`, `1000`은 **현재 프론트엔드 임시 옵션**)
 - 매출: **KRW/month**, 서버는 **원 단위의 숫자**로 반환, 프론트에서 만원 단위로 표시
 - 오류: 오류 시 4xx/5xx HTTP 코드와 공통 JSON 응답
-- React 개발 서버 `http://localhost:5173` 를 FastAPI CORS 허용 출처에 추가
+- React 개발 서버 `http://localhost:8000` 를 FastAPI CORS 허용 출처에 추가
 - GPT, 지도 장소 검색용 비밀키는 백엔드에서 관리. 브라우저에 보내지 않음
 - **반경이 모델 입력인지, 주변 시설 검색에만 사용되는지 결정 필요.**
 
@@ -125,7 +125,7 @@
 ## 서버와 연결하는 방법
 
 1. `.env.example` → `.env` 복사
-2. `VITE_USE_MOCK=false`, `VITE_API_BASE_URL=http://localhost:8000`
+2. `VITE_USE_MOCK=false`, `VITE_API_BASE_URL=http://localhost:8001`
 3. 먼저 `python tools/mock_api_server.py`로 **테스트 서버**와 HTTP 연결 확인
 4. 그다음 실제 FastAPI 서버로 교체, 필드 불일치 여부 확인
 5. 실제 행정구역 GeoJSON과 백엔드 공간 판정이 같은 기준인지 검증

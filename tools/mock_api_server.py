@@ -1,7 +1,7 @@
 """서버 연동을 미리 연습하는 테스트용 HTTP API (실제 ML/GPT 아님).
 
 실행: python tools/mock_api_server.py
-프론트엔드 .env: VITE_USE_MOCK=false, VITE_API_BASE_URL=http://localhost:8000
+프론트엔드 .env: VITE_USE_MOCK=false, VITE_API_BASE_URL=http://localhost:8001
 백엔드 조원이 만든 FastAPI 서버를 대체하지 않습니다.
 """
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -9,7 +9,7 @@ import json
 import os
 
 HOST = "127.0.0.1"
-PORT = int(os.getenv("PORT", "8000"))
+PORT = int(os.getenv("PORT", "8001"))
 
 
 def analyze(data):
@@ -45,7 +45,7 @@ class Handler(BaseHTTPRequestHandler):
     def _headers(self, status):
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Access-Control-Allow-Origin", "http://localhost:5173")
+        self.send_header("Access-Control-Allow-Origin", "http://localhost:8000")
         self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
