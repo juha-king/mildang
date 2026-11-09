@@ -7,7 +7,22 @@ export const DEMO_BOUNDS = [
   [37.440, 126.995],
 ];
 
+const MAP_BOUNDS_PADDING = 0.4;
+const latitudePadding = (DEMO_BOUNDS[1][0] - DEMO_BOUNDS[0][0]) * MAP_BOUNDS_PADDING;
+const longitudePadding = (DEMO_BOUNDS[1][1] - DEMO_BOUNDS[0][1]) * MAP_BOUNDS_PADDING;
+export const MAP_BOUNDS = [
+  [DEMO_BOUNDS[0][0] - latitudePadding, DEMO_BOUNDS[0][1] - longitudePadding],
+  [DEMO_BOUNDS[1][0] + latitudePadding, DEMO_BOUNDS[1][1] + longitudePadding],
+];
+
 export const ANYANG_CENTER = [37.392, 126.946];
+
+export function constrainMapCenter(lat, lng) {
+  return {
+    lat: Math.max(MAP_BOUNDS[0][0], Math.min(MAP_BOUNDS[1][0], lat)),
+    lng: Math.max(MAP_BOUNDS[0][1], Math.min(MAP_BOUNDS[1][1], lng)),
+  };
+}
 
 export const PRESET_LOCATIONS = [
   { name: '범계역 일대', lat: 37.389, lng: 126.952, sub: '동안구' },

@@ -46,7 +46,7 @@ export function bindKakaoTrackpad(container, map, maps) {
     dx = 0;
     dy = 0;
     window.clearTimeout(zoomTimer);
-    zoomTimer = window.setTimeout(applyZoom, 70);
+    zoomTimer = window.setTimeout(applyZoom, 35);
   }
 
   function onWheel(event) {

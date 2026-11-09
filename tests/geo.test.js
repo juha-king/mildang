@@ -1,11 +1,19 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { withinDemoBounds, withinGeoJSON } from '../src/lib/geo.js';
+import { constrainMapCenter, MAP_BOUNDS, withinDemoBounds, withinGeoJSON } from '../src/lib/geo.js';
 
 test('임시 사각형: 경계선은 내부로 처리', () => {
   assert.equal(withinDemoBounds(37.350, 126.895), true);
   assert.equal(withinDemoBounds(37.440, 126.995), true);
   assert.equal(withinDemoBounds(37.449, 126.95), false);
+});
+
+test('지도 중심은 분석 영역 주변의 허용 범위 안으로 제한', () => {
+  assert.deepEqual(constrainMapCenter(MAP_BOUNDS[0][0] - 1, MAP_BOUNDS[0][1] - 1), {
+    lat: MAP_BOUNDS[0][0],
+    lng: MAP_BOUNDS[0][1],
+  });
+  assert.deepEqual(constrainMapCenter(37.39, 126.95), { lat: 37.39, lng: 126.95 });
 });
 
 // 전부 테스트용 사각형, 실제 안양시 경계와는 무관

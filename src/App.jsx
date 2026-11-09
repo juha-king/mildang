@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Activity, AlertCircle, ArrowRight, BarChart3, BookmarkPlus, CheckCircle2, ChevronDown, Coffee, Compass, Lightbulb, LoaderCircle, MapPin, Navigation, RotateCcw, SlidersHorizontal, Sparkles, TrendingUp, UsersRound, X
 } from 'lucide-react';
@@ -174,8 +174,10 @@ export default function App() {
   const analysisRequestNumber = useRef(0);
   const reportRequestNumber = useRef(0);
   const mapRef = useRef(null);
-  const resultRef = useRef(null);
   const panelContentRef = useRef(null);
+  const setResultRef = useCallback((element) => {
+    if (element) element.scrollIntoView({ behavior: 'instant', block: 'start' });
+  }, []);
   const comparisonRef = useRef(null);
   const reportDialogRef = useRef(null);
 
@@ -300,7 +302,6 @@ export default function App() {
       if (currentRequest !== analysisRequestNumber.current) return;
       setAnalysis(result);
       setAnalysisContext(context);
-      requestAnimationFrame(() => resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
     } catch (error) {
       if (controller.signal.aborted || currentRequest !== analysisRequestNumber.current) return;
       setAnalysisError(error.message || '분석 요청에 실패했습니다.');
@@ -371,7 +372,9 @@ export default function App() {
   return (
     <div className="studio-shell">
       <header className="studio-header">
-        <a className="brand" href="#home" aria-label="밀당 처음으로">밀당</a>
+        <a className="brand" href="#home" aria-label="밀당 처음으로">
+          <span className="brand-push">밀</span><span className="brand-pull">당</span>
+        </a>
         <div className="studio-product"><span /> 입지 분석 스튜디오</div>
         <div className="studio-header-right">
           <span className="studio-region"><MapPin size={14} /> 안양시</span>
@@ -384,7 +387,7 @@ export default function App() {
         <aside className="studio-panel" aria-label="분석 조건과 결과">
           <div className="studio-panel-title">
             <span className="studio-eyebrow">LOCATION / INSIGHT</span>
-            <h1>어디에 열어볼까요?</h1>
+            <h1>내 가게, 어디가 좋을까요?</h1>
             <p>업종을 고르고 지도에서 가능성을 찾아보세요.</p>
             {analysis && <button type="button" className="studio-edit"
               onClick={() => panelContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' })}>
@@ -400,11 +403,6 @@ export default function App() {
                 </select><ChevronDown size={17} className="field-chevron" />
               </div>
               <small className="field-help">업종별 예상 매출을 비교해 보세요.</small>
-            </div>
-            <div className="field-group">
-              <label>분석 지역 <span className="required">*</span></label>
-              <div className="fixed-input"><MapPin size={17} /><span>경기도 안양시</span>
-                <span className="fixed-badge">시범 지역</span></div>
             </div>
             <div className="field-group">
               <div className="field-label-row"><label>상권 분석 반경</label></div>
@@ -439,7 +437,8 @@ export default function App() {
               <p>선택 후 위의 '예상 월매출 예측하기'를 눌러 오류 표시를 확인하세요.</p>
             </details>}
 
-            {(analysis || loading || analysisError) && <section className="studio-result" aria-label="매출 예측 결과" ref={resultRef} aria-live="polite">
+            {(analysis || loading || analysisError) && <section className="studio-result" key={loading ? 'loading' : analysis ? 'analysis' : 'error'}
+              aria-label="매출 예측 결과" ref={setResultRef} aria-live="polite">
           {analysisError && <div className="inline-error" role="alert"><AlertCircle size={19} />
             <div><strong>분석에 실패했습니다.</strong><p>{analysisError}</p></div>
             <button type="button" onClick={handleAnalyze}>다시 시도</button></div>}

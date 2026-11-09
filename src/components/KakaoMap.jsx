@@ -4,7 +4,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { bindKakaoTrackpad } from '../lib/kakao-trackpad.js';
-import { ANYANG_CENTER, DEMO_BOUNDS, PRESET_LOCATIONS } from '../lib/geo.js';
+import { ANYANG_CENTER, constrainMapCenter, DEMO_BOUNDS, PRESET_LOCATIONS } from '../lib/geo.js';
 
 let pendingSdk = null;
 function loadKakaoSdk(key) {
@@ -62,6 +62,7 @@ export default function KakaoMap({ selected, boundary, radius, onSelect, onLoadE
     let mounted = true;
     let map = null;
     let listener = null;
+    let boundsListener = null;
     let observer = null;
     let removeTrackpad = null;
     loadKakaoSdk(jsKey).then(kakao => {
@@ -72,10 +73,18 @@ export default function KakaoMap({ selected, boundary, radius, onSelect, onLoadE
       });
       mapInstance.current = map;
       map.setMinLevel(1);
-      map.setMaxLevel(14);
+      map.setMaxLevel(8);
       removeTrackpad = bindKakaoTrackpad(mapElement.current, map, maps);
       listener = event => onSelectRef.current(event.latLng.getLat(), event.latLng.getLng());
       maps.event.addListener(map, 'click', listener);
+      boundsListener = () => {
+        const center = map.getCenter();
+        const constrained = constrainMapCenter(center.getLat(), center.getLng());
+        if (center.getLat() !== constrained.lat || center.getLng() !== constrained.lng) {
+          map.panTo(new maps.LatLng(constrained.lat, constrained.lng));
+        }
+      };
+      maps.event.addListener(map, 'idle', boundsListener);
       observer = new ResizeObserver(() => {
         const center = map.getCenter();
         map.relayout();
@@ -91,6 +100,9 @@ export default function KakaoMap({ selected, boundary, radius, onSelect, onLoadE
       if (map && listener && window.kakao?.maps?.event) {
         window.kakao.maps.event.removeListener(map, 'click', listener);
       }
+      if (map && boundsListener && window.kakao?.maps?.event) {
+        window.kakao.maps.event.removeListener(map, 'idle', boundsListener);
+      }
       overlaysRef.current.forEach(overlay => overlay.setMap(null));
       overlaysRef.current = [];
       mapInstance.current = null;
@@ -103,37 +115,47 @@ export default function KakaoMap({ selected, boundary, radius, onSelect, onLoadE
     const map = mapInstance.current;
     overlaysRef.current.forEach(item => item.setMap(null));
     const overlays = [];
+    const makeMarkerImage = color => {
+      const markerSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40"><path d="M16 2C8.3 2 2 8.3 2 16c0 10 14 22 14 22s14-12 14-22C30 8.3 23.7 2 16 2Z" fill="${color}" stroke="#FFFFFF" stroke-width="2"/><circle cx="16" cy="16" r="5" fill="#FFFFFF"/></svg>`;
+      return new maps.MarkerImage(
+        `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(markerSvg)}`,
+        new maps.Size(32, 40),
+        { offset: new maps.Point(16, 40) },
+      );
+    };
+    const presetMarkerImage = makeMarkerImage('#00B8D9');
+    const selectedMarkerImage = makeMarkerImage('#245BFF');
 
     if (boundary) {
       for (const rings of polygonsFromGeoJSON(boundary)) {
         const path = rings.map(ring => ring.map(([lng, lat]) => new maps.LatLng(lat, lng)));
         overlays.push(new maps.Polygon({
           map, path: path.length === 1 ? path[0] : path,
-          strokeWeight: 7, strokeColor: '#FEFFFE', strokeOpacity: 0.95,
-          fillColor: '#FEFFFE', fillOpacity: 0,
+          strokeWeight: 7, strokeColor: '#FFFFFF', strokeOpacity: 0.95,
+          fillColor: '#FFFFFF', fillOpacity: 0,
         }));
         overlays.push(new maps.Polygon({
           map, path: path.length === 1 ? path[0] : path,
-          strokeWeight: 3, strokeColor: '#5C80BC', strokeOpacity: 1,
-          fillColor: '#5C80BC', fillOpacity: 0.1,
+          strokeWeight: 3, strokeColor: '#245BFF', strokeOpacity: 1,
+          fillColor: '#245BFF', fillOpacity: 0.1,
         }));
       }
     } else {
       overlays.push(new maps.Rectangle({
         map, bounds: new maps.LatLngBounds(
           new maps.LatLng(...DEMO_BOUNDS[0]), new maps.LatLng(...DEMO_BOUNDS[1])),
-        strokeWeight: 8, strokeColor: '#FEFFFE', strokeStyle: 'dash',
-        fillColor: '#FEFFFE', fillOpacity: 0,
+        strokeWeight: 8, strokeColor: '#FFFFFF', strokeStyle: 'dash',
+        fillColor: '#FFFFFF', fillOpacity: 0,
       }));
       overlays.push(new maps.Rectangle({
         map, bounds: new maps.LatLngBounds(
           new maps.LatLng(...DEMO_BOUNDS[0]), new maps.LatLng(...DEMO_BOUNDS[1])),
-        strokeWeight: 4, strokeColor: '#5C80BC', strokeStyle: 'dash',
-        fillColor: '#5C80BC', fillOpacity: 0.1,
+        strokeWeight: 4, strokeColor: '#245BFF', strokeStyle: 'dash',
+        fillColor: '#245BFF', fillOpacity: 0.1,
       }));
     }
     for (const place of PRESET_LOCATIONS) {
-      const marker = new maps.Marker({ map, position: new maps.LatLng(place.lat, place.lng) });
+      const marker = new maps.Marker({ map, position: new maps.LatLng(place.lat, place.lng), image: presetMarkerImage });
       const handler = () => onSelectRef.current(place.lat, place.lng, place.name);
       maps.event.addListener(marker, 'click', handler);
       overlays.push(marker);
@@ -141,14 +163,14 @@ export default function KakaoMap({ selected, boundary, radius, onSelect, onLoadE
     if (selected) {
       const position = new maps.LatLng(selected.lat, selected.lng);
       overlays.push(new maps.Circle({
-        map, center: position, radius, strokeWeight: 6, strokeColor: '#FEFFFE',
-        fillColor: '#FEFFFE', fillOpacity: 0,
+        map, center: position, radius, strokeWeight: 6, strokeColor: '#FFFFFF',
+        fillColor: '#FFFFFF', fillOpacity: 0,
       }));
       overlays.push(new maps.Circle({
-        map, center: position, radius, strokeWeight: 2, strokeColor: '#3D3B30',
-        fillColor: '#5C80BC', fillOpacity: 0.1,
+        map, center: position, radius, strokeWeight: 2, strokeColor: '#14213D',
+        fillColor: '#245BFF', fillOpacity: 0.1,
       }));
-      overlays.push(new maps.Marker({ map, position, zIndex: 5 }));
+      overlays.push(new maps.Marker({ map, position, image: selectedMarkerImage, zIndex: 5 }));
       map.panTo(position);
     }
     overlaysRef.current = overlays;

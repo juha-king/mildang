@@ -1,7 +1,7 @@
 import { useMemo, useEffect, useState } from 'react';
 import L from 'leaflet';
 import { Circle, MapContainer, Marker, Rectangle, TileLayer, Tooltip, useMap, useMapEvents, GeoJSON, ZoomControl } from 'react-leaflet';
-import { ANYANG_CENTER, DEMO_BOUNDS, PRESET_LOCATIONS } from '../lib/geo.js';
+import { ANYANG_CENTER, DEMO_BOUNDS, MAP_BOUNDS, PRESET_LOCATIONS } from '../lib/geo.js';
 import KakaoMap from './KakaoMap.jsx';
 
 function ClickHandler({ onClickPoint }) {
@@ -25,17 +25,17 @@ function TrackpadGestures() {
   const map = useMap();
   useEffect(() => {
     const container = map.getContainer();
-    let frame = null;
+    let panFrame = null;
     let deltaX = 0;
     let deltaY = 0;
-    let pendingZoom = null;
+    let targetZoom = null;
     let zoomPoint = null;
     let zoomTimer = null;
     let safariStartZoom = null;
 
-    function applyGesture() {
-      frame = null;
-      map.stop();
+    function applyPan() {
+      panFrame = null;
+      if (deltaX === 0 && deltaY === 0) return;
       map.panBy([deltaX, deltaY], { animate: false });
       deltaX = 0;
       deltaY = 0;
@@ -43,18 +43,22 @@ function TrackpadGestures() {
 
     function applyZoom() {
       zoomTimer = null;
-      if (pendingZoom === null) return;
-      map.setZoomAround(zoomPoint, pendingZoom, { animate: true });
-      pendingZoom = null;
+      if (targetZoom === null) return;
+      map.setZoomAround(zoomPoint, targetZoom, { animate: true, duration: 0.2 });
+      targetZoom = null;
     }
 
     function queueZoom(event, zoom) {
-      pendingZoom = Math.max(map.getMinZoom(), Math.min(map.getMaxZoom(), zoom));
+      targetZoom = Math.max(map.getMinZoom(), Math.min(map.getMaxZoom(), zoom));
       zoomPoint = map.mouseEventToContainerPoint(event);
       deltaX = 0;
       deltaY = 0;
       window.clearTimeout(zoomTimer);
-      zoomTimer = window.setTimeout(applyZoom, 70);
+      zoomTimer = window.setTimeout(applyZoom, 40);
+      if (panFrame !== null) {
+        cancelAnimationFrame(panFrame);
+        panFrame = null;
+      }
     }
 
     function onWheel(event) {
@@ -67,12 +71,12 @@ function TrackpadGestures() {
       const scaleX = event.deltaMode === 2 ? container.clientWidth : event.deltaMode === 1 ? lineSize : 1;
       const scaleY = event.deltaMode === 2 ? container.clientHeight : event.deltaMode === 1 ? lineSize : 1;
       if (event.ctrlKey) {
-        queueZoom(event, (pendingZoom ?? map.getZoom()) - event.deltaY * scaleY / 200);
+        queueZoom(event, (targetZoom ?? map.getZoom()) - event.deltaY * scaleY / 200);
         return;
       }
       deltaX += event.deltaX * scaleX;
       deltaY += event.deltaY * scaleY;
-      if (frame === null) frame = requestAnimationFrame(applyGesture);
+      if (panFrame === null) panFrame = requestAnimationFrame(applyPan);
     }
 
     function onGestureStart(event) {
@@ -81,6 +85,8 @@ function TrackpadGestures() {
       event.preventDefault();
       map.stop();
       safariStartZoom = map.getZoom();
+      targetZoom = safariStartZoom;
+      window.clearTimeout(zoomTimer);
       deltaX = 0;
       deltaY = 0;
     }
@@ -107,7 +113,7 @@ function TrackpadGestures() {
       container.removeEventListener('gesturestart', onGestureStart);
       container.removeEventListener('gesturechange', onGestureChange);
       container.removeEventListener('gestureend', onGestureEnd);
-      if (frame !== null) cancelAnimationFrame(frame);
+      if (panFrame !== null) cancelAnimationFrame(panFrame);
       window.clearTimeout(zoomTimer);
     };
   }, [map]);
@@ -165,26 +171,29 @@ function LeafletAnyangMap({ selected, boundary, radius, onSelect, providerNotice
 
   return (
     <div className="map-frame">
-      <MapContainer center={ANYANG_CENTER} zoom={12} scrollWheelZoom={false} zoomSnap={0} touchZoom={true} zoomControl={false} className="leaflet-map" minZoom={10} maxZoom={18}>
+      <MapContainer center={ANYANG_CENTER} zoom={12} scrollWheelZoom={false} zoomSnap={0} touchZoom={true} zoomControl={false} inertia={true}
+        className="leaflet-map" minZoom={12} maxZoom={18} maxBounds={MAP_BOUNDS} maxBoundsViscosity={1}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors'
           url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
           maxZoom={19}
+          updateWhenZooming={false}
+          keepBuffer={3}
           eventHandlers={tileEvents}
         />
         {boundary ? (
           <>
             <GeoJSON key="anyang-boundary-outline" data={boundary}
-              style={{ color: '#FEFFFE', weight: 7, opacity: 0.95, fillOpacity: 0 }} />
+              style={{ color: '#FFFFFF', weight: 7, opacity: 0.95, fillOpacity: 0 }} />
             <GeoJSON key="anyang-boundary" data={boundary}
-              style={{ color: '#5C80BC', weight: 3, fillColor: '#5C80BC', fillOpacity: 0.1 }} />
+              style={{ color: '#245BFF', weight: 3, fillColor: '#245BFF', fillOpacity: 0.1 }} />
           </>
         ) : (
           <>
             <Rectangle bounds={DEMO_BOUNDS}
-              pathOptions={{ color: '#FEFFFE', dashArray: '7 6', weight: 8, fillOpacity: 0 }} />
+              pathOptions={{ color: '#FFFFFF', dashArray: '7 6', weight: 8, fillOpacity: 0 }} />
             <Rectangle bounds={DEMO_BOUNDS}
-              pathOptions={{ color: '#5C80BC', dashArray: '7 6', weight: 4, fillColor: '#5C80BC', fillOpacity: 0.1 }} />
+              pathOptions={{ color: '#245BFF', dashArray: '7 6', weight: 4, fillColor: '#245BFF', fillOpacity: 0.1 }} />
           </>
         )}
         {PRESET_LOCATIONS.map(place => (
@@ -194,8 +203,8 @@ function LeafletAnyangMap({ selected, boundary, radius, onSelect, providerNotice
         ))}
         {selected && (
           <>
-            <Circle center={[selected.lat, selected.lng]} radius={radius} pathOptions={{ color: '#FEFFFE', fillOpacity: 0, weight: 6 }} />
-            <Circle center={[selected.lat, selected.lng]} radius={radius} pathOptions={{ color: '#3D3B30', fillColor: '#5C80BC', fillOpacity: 0.1, weight: 2, dashArray: '4 4' }} />
+            <Circle center={[selected.lat, selected.lng]} radius={radius} pathOptions={{ color: '#FFFFFF', fillOpacity: 0, weight: 6 }} />
+            <Circle center={[selected.lat, selected.lng]} radius={radius} pathOptions={{ color: '#14213D', fillColor: '#245BFF', fillOpacity: 0.1, weight: 2, dashArray: '4 4' }} />
             <Marker position={[selected.lat, selected.lng]} icon={markerIcon}>
               <Tooltip direction="top" offset={[0, -20]} permanent>{selected.name}</Tooltip>
             </Marker>

@@ -18,7 +18,7 @@ npm install
 npm run dev
 ```
 
-5. 웹브라우저에서 **http://localhost:5173** 접속
+5. 웹브라우저에서 **http://localhost:8000** 접속
 6. 업종 선택 → 지도 클릭 또는 '빠른 위치 선택' → **AI 입지 분석하기** 클릭 → **후보지 저장** → **리포트 생성하기**
 
 종료는 터미널에서 `Ctrl + C`. React/Vite이므로 HTML 파일만 더블클릭하면 실행되지 않습니다.
@@ -133,7 +133,7 @@ VITE_MAP_PROVIDER=kakao
 VITE_KAKAO_MAP_JS_KEY=카카오_웹_JavaScript_키
 ```
 
-- 카카오 개발자 콘솔에서 **JavaScript 키와 웹 도메인**(`http://localhost:5173` 등)을 등록해야 합니다.
+- 카카오 개발자 콘솔에서 **JavaScript 키와 웹 도메인**(`http://localhost:8000` 등)을 등록해야 합니다.
 - 카카오 JavaScript 키는 브라우저에서 SDK를 불러오기 위해 사용되는 클라이언트 키로, `VITE_` 환경변수이므로 브라우저에 노출됩니다. 도메인 제한을 적용하세요.
 - **GPT API 키, 카카오 REST API 비밀키**는 여기에 넣지 않고 반드시 백엔드에서 관리하세요.
 - 환경변수를 바꾸면 `npm run dev`를 재시작하세요.
